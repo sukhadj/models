@@ -90,16 +90,25 @@ def run(flags_obj):
   Returns:
     Dictionary of training and eval stats.
   """
-  config = keras_common.get_config_proto()
   # TODO(tobyboyd): Remove eager flag when tf 1.0 testing ends.
   # Eager is default in tf 2.0 and should not be toggled
-  if not keras_common.is_v2_0():
+  if keras_common.is_v2_0():
+    if flags_obj.enable_xla:
+      # TODO(haoyuzhang): Remove this monkey patch when XLA OOM issue is fixed.
+      _monkey_patch_org_assert_broadcastable()
+      tf.config.optimizer.set_jit(True)
+      # Disable PinToHostOptimizer in grappler when enabling XLA because it
+      # causes OOM and performance regression.
+      tf.config.set_optimizer_experimental_options(
+        "pin_to_host_optimization": False
+      )
+  else:
+    config = keras_common.get_config_proto()
     if flags_obj.enable_eager:
       tf.compat.v1.enable_eager_execution(config=config)
     else:
       sess = tf.Session(config=config)
       tf.keras.backend.set_session(sess)
-  # TODO(haoyuzhang): Set config properly in TF2.0 when the config API is ready.
 
   dtype = flags_core.get_tf_dtype(flags_obj)
   if dtype == 'float16':

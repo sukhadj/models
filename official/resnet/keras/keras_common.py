@@ -136,7 +136,7 @@ def get_config_proto():
     # TODO(haoyuzhang): Remove this monkey patch when XLA OOM issue is fixed.
     _monkey_patch_org_assert_broadcastable()
 
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.graph_options.optimizer_options.global_jit_level = (
         tf.OptimizerOptions.ON_2)
     # Disable PinToHostOptimizer in grappler when enabling XLA because it causes
